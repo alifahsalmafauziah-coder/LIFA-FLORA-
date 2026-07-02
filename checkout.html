@@ -852,6 +852,18 @@
                 💡 Simpan nomor ini sebelum checkout. Kirim bukti transfer ke WhatsApp kami setelah bayar.
               </div>
             </div>
+
+            <div class="co-voucher-card">
+              <div class="co-voucher-header">
+                <span>🎟️ Voucher / Promo</span>
+                <small>Kode promo tersedia: LIFA10</small>
+              </div>
+              <div class="co-voucher-input-row">
+                <input type="text" id="coVoucher" placeholder="Masukkan kode voucher" />
+                <button type="button" class="co-voucher-btn" onclick="applyVoucherCode()">Terapkan</button>
+              </div>
+              <p class="co-voucher-note">Gunakan kode LIFA10 untuk diskon 10% hingga Rp 50.000 untuk pembelian 2 item atau lebih.</p>
+            </div>
           </div>
         </div>
 
@@ -902,7 +914,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <script type="module" src="script.js"></script>
+  <script src="script.js"></script>
   <script>
     /* ===== PAYMENT CATEGORY SYSTEM ===== */
     let _selectedPayValue = "";
@@ -961,6 +973,8 @@
       document.getElementById("coPayment").value = "";
     }
 
+    window.resetPayCategory = resetPayCategory;
+
     function selectBank(btn) {
       // Hapus selected dari semua tombol di panel aktif
       btn.closest(".pay-bank-list").querySelectorAll(".pay-bank-btn").forEach(b => {
@@ -995,6 +1009,14 @@
 
     function copySelNum() {
       const num = document.getElementById("paySelNum")?.textContent;
+      if (!num || num === "-") return;
+      navigator.clipboard.writeText(num)
+        .then(() => showToast("✅ " + num + " berhasil disalin!"))
+        .catch(() => showToast("Salin manual: " + num));
+    }
+
+    function copyPaymentNumber() {
+      const num = document.getElementById("paymentNumber")?.textContent;
       if (!num || num === "-") return;
       navigator.clipboard.writeText(num)
         .then(() => showToast("✅ " + num + " berhasil disalin!"))

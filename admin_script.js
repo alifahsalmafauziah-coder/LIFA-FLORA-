@@ -2,9 +2,6 @@
    admin_script.js — Lifa Flora Admin (versi lengkap)
    ============================================================ */
 
-/* ---- Import Firebase ---- */
-import { getProductsFromFirestore, saveProductsToFirestore, saveOneProductToFirestore } from "./firebase-config.js";
-
 const STORAGE_PRODUCTS_KEY  = "lifaFloraProducts";
 const STORAGE_ORDERS_KEY    = "lifaFloraOrders";
 const STORAGE_ALL_ORDERS    = "lifaFloraAllOrders";
@@ -34,18 +31,40 @@ const defaultProducts = [
 
 let products = [];
 let allOrders = [];
+let firebaseHelpers = null;
+
+async function loadFirebaseHelpers() {
+  if (firebaseHelpers) return firebaseHelpers;
+  try {
+    const mod = await import("./firebase-config.js");
+    firebaseHelpers = {
+      getProductsFromFirestore: mod.getProductsFromFirestore,
+      saveProductsToFirestore: mod.saveProductsToFirestore,
+      saveOneProductToFirestore: mod.saveOneProductToFirestore
+    };
+  } catch (e) {
+    console.warn("Firebase unavailable in admin, using local fallback.", e);
+    firebaseHelpers = {
+      getProductsFromFirestore: async () => null,
+      saveProductsToFirestore: async () => false,
+      saveOneProductToFirestore: async () => false
+    };
+  }
+  return firebaseHelpers;
+}
 
 /* ---------- helpers ---------- */
 function formatPrice(n) { return "Rp " + Number(n).toLocaleString("id-ID"); }
 
 async function loadData() {
+  const fb = await loadFirebaseHelpers();
   try {
-    const firestoreProducts = await getProductsFromFirestore();
+    const firestoreProducts = await fb.getProductsFromFirestore();
     if (firestoreProducts && firestoreProducts.length > 0) {
       products = firestoreProducts;
     } else {
       products = [...defaultProducts];
-      await saveProductsToFirestore(defaultProducts);
+      await fb.saveProductsToFirestore(defaultProducts);
     }
   } catch (e) {
     const p = localStorage.getItem(STORAGE_PRODUCTS_KEY);
@@ -59,7 +78,8 @@ async function loadData() {
 
 async function saveProducts() {
   localStorage.setItem(STORAGE_PRODUCTS_KEY, JSON.stringify(products));
-  await saveProductsToFirestore(products);
+  const fb = await loadFirebaseHelpers();
+  await fb.saveProductsToFirestore(products);
 }
 
 function saveAllOrders() {

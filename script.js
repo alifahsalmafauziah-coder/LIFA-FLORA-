@@ -2,9 +2,6 @@
    script.js — Lifa Flora E-Commerce (FIXED VERSION)
    ============================================================ */
 
-/* ---- Import Firebase ---- */
-import { getProductsFromFirestore, saveProductsToFirestore, listenProducts } from "./firebase-config.js";
-
 const STORAGE_PRODUCTS_KEY = "lifaFloraProducts";
 const STORAGE_ORDERS_KEY = "lifaFloraOrders";
 const STORAGE_USERS_KEY = "lifaFloraUsers";
@@ -44,6 +41,28 @@ function updateNavAuth() {
     loginItem.style.display = "";
     userItem.style.display = "none";
   }
+}
+
+let firebaseHelpers = null;
+
+async function loadFirebaseHelpers() {
+  if (firebaseHelpers) return firebaseHelpers;
+  try {
+    const mod = await import("./firebase-config.js");
+    firebaseHelpers = {
+      getProductsFromFirestore: mod.getProductsFromFirestore,
+      saveProductsToFirestore: mod.saveProductsToFirestore,
+      listenProducts: mod.listenProducts
+    };
+  } catch (e) {
+    console.warn("Firebase unavailable, using local fallback.", e);
+    firebaseHelpers = {
+      getProductsFromFirestore: async () => null,
+      saveProductsToFirestore: async () => false,
+      listenProducts: () => () => {}
+    };
+  }
+  return firebaseHelpers;
 }
 
 /* ---------- Order persistence ---------- */
@@ -228,15 +247,17 @@ async function loadState() {
   if (!Array.isArray(orders)) orders = [];
   if (!Array.isArray(cart))   cart   = [];
 
+  const fb = await loadFirebaseHelpers();
+
   /* Coba ambil produk dari Firestore */
   try {
-    const firestoreProducts = await getProductsFromFirestore();
+    const firestoreProducts = await fb.getProductsFromFirestore();
     if (firestoreProducts && firestoreProducts.length > 0) {
       products = firestoreProducts;
       /* Kalau Firestore masih kosong (pertama kali), upload defaultProducts */
     } else {
       products = [...defaultProducts];
-      await saveProductsToFirestore(defaultProducts);
+      await fb.saveProductsToFirestore(defaultProducts);
     }
   } catch (e) {
     /* Fallback ke localStorage kalau Firestore error */
@@ -246,7 +267,7 @@ async function loadState() {
   if (!Array.isArray(products)) products = [...defaultProducts];
 
   /* Listen perubahan produk realtime dari Firestore */
-  listenProducts((updatedProducts) => {
+  fb.listenProducts((updatedProducts) => {
     if (updatedProducts && updatedProducts.length > 0) {
       products = updatedProducts;
       renderProducts(currentFilter);
@@ -621,9 +642,9 @@ function renderVoucherStatus() {
   statusEl.className = "voucher-status voucher-status--success";
 }
 
-function applyVoucher() {
-  const input = document.getElementById("voucherInput");
-  const code = input?.value.trim().toUpperCase();
+function applyVoucherCode() {
+  const voucherEl = document.getElementById("coVoucher") || document.getElementById("voucherInput");
+  const code = voucherEl?.value.trim().toUpperCase();
 
   if (!code) {
     showToast("⚠️ Masukkan kode voucher terlebih dahulu.");
@@ -633,6 +654,8 @@ function applyVoucher() {
   if (!vouchers[code]) {
     appliedVoucher = null;
     renderVoucherStatus();
+    if (voucherEl) voucherEl.value = "";
+    if (window.__checkoutRecompute) window.__checkoutRecompute();
     showToast("❌ Kode voucher tidak valid. Gunakan LIFA10.");
     return;
   }
@@ -640,14 +663,24 @@ function applyVoucher() {
   if (cart.reduce((sum, item) => sum + Number(item.qty || 0), 0) < 2) {
     appliedVoucher = null;
     renderVoucherStatus();
+    if (voucherEl) voucherEl.value = "";
+    if (window.__checkoutRecompute) window.__checkoutRecompute();
     showToast("⚠️ Voucher hanya bisa dipakai saat keranjang minimal 2 produk.");
     return;
   }
 
   appliedVoucher = { code };
+  if (voucherEl) voucherEl.value = code;
   renderVoucherStatus();
   updateCartUI();
+  if (window.__checkoutRecompute) window.__checkoutRecompute();
   showToast(`🎟️ Voucher ${code} berhasil diterapkan.`);
+}
+
+function applyVoucher() {
+  const input = document.getElementById("voucherInput") || document.getElementById("coVoucher");
+  if (input) input.value = input.value.trim().toUpperCase();
+  applyVoucherCode();
 }
 
 function updateCartUI() {
@@ -941,6 +974,36 @@ function closeMenu() {
   if (hamburger) hamburger.setAttribute("aria-expanded", "false");
 }
 
+function navigateTo(target) {
+  const normalized = String(target || "").toLowerCase();
+  if (normalized === "loginview") {
+    window.location.href = "login.html";
+    return;
+  }
+  if (normalized === "cartview") {
+    toggleCart();
+    return;
+  }
+  if (normalized === "homeview") {
+    window.location.href = "index.html";
+    return;
+  }
+  if (normalized === "productsview") {
+    window.location.href = "index.html#products";
+    return;
+  }
+  if (normalized === "aboutview") {
+    window.location.href = "index.html#contact";
+    return;
+  }
+  if (normalized.startsWith("#")) {
+    const targetEl = document.querySelector(normalized);
+    if (targetEl) targetEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  window.location.href = "index.html";
+}
+
 function toggleMenu() {
   const nav = document.getElementById("navLinks");
   const hamburger = document.getElementById("hamburger");
@@ -966,7 +1029,8 @@ window.addEventListener("resize", () => {
 });
 
 window.addEventListener("scroll", () => {
-  document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 50);
+  const navbar = document.getElementById("navbar");
+  if (navbar) navbar.classList.toggle("scrolled", window.scrollY > 50);
 });
 
 window.addEventListener("scroll", () => {
@@ -1270,7 +1334,7 @@ async function initCheckoutPage() {
   function recompute() {
     const summary = getCartSummary();
     const shipping = Number(shippingEl?.value || 0);
-    const voucherCode = voucherEl?.value.trim().toUpperCase() || "";
+    const voucherCode = voucherEl?.value.trim().toUpperCase() || (appliedVoucher ? appliedVoucher.code : "");
     let discount = summary.discount;
     if (voucherCode === "LIFA10" && summary.totalItems >= 2) {
       discount = Math.min(summary.subtotal * 0.1, 50000);
@@ -1292,6 +1356,7 @@ async function initCheckoutPage() {
       </div>
     </div>`).join("");
 
+  window.__checkoutRecompute = recompute;
   recompute();
   if (shippingEl) shippingEl.addEventListener("change", recompute);
   if (voucherEl) voucherEl.addEventListener("input", recompute);
@@ -1310,7 +1375,7 @@ async function initCheckoutPage() {
 
       const summary = getCartSummary();
       const shipping = Number(shippingEl?.value || 0);
-      const voucherCode = voucherEl?.value.trim().toUpperCase() || "";
+      const voucherCode = voucherEl?.value.trim().toUpperCase() || (appliedVoucher ? appliedVoucher.code : "");
       let discount = summary.discount;
       if (voucherCode === "LIFA10" && summary.totalItems >= 2) {
         discount = Math.min(summary.subtotal * 0.1, 50000);
@@ -1488,7 +1553,9 @@ function submitContact() {
   showToast("✅ Mengarahkan ke WhatsApp...");
 }
 
-lucide.createIcons();
+if (window.lucide && typeof window.lucide.createIcons === 'function') {
+  window.lucide.createIcons();
+}
 initApp();
 updateNavAuth();
 /* ============================================================
@@ -1782,6 +1849,42 @@ function submitReview() {
     openReviewModal(_reviewProductId);
   }, 300);
 }
+
+function copyTextToClipboard(text) {
+  if (!text) return false;
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text);
+    return true;
+  }
+  const tempInput = document.createElement("input");
+  tempInput.value = text;
+  document.body.appendChild(tempInput);
+  tempInput.select();
+  document.execCommand("copy");
+  document.body.removeChild(tempInput);
+  return true;
+}
+
+function copyPaymentNumber() {
+  const value = document.getElementById("paymentNumber")?.textContent?.trim();
+  if (!value || value === "-") {
+    showToast("⚠️ Belum ada nomor pembayaran yang dipilih.");
+    return;
+  }
+  copyTextToClipboard(value);
+  showToast("📋 Nomor pembayaran berhasil disalin.");
+}
+
+function copySelNum() {
+  const value = document.getElementById("paySelNum")?.textContent?.trim();
+  if (!value || value === "-") {
+    showToast("⚠️ Belum ada nomor rekening yang dipilih.");
+    return;
+  }
+  copyTextToClipboard(value);
+  showToast("📋 Nomor rekening berhasil disalin.");
+}
+
 /* ---- Expose fungsi ke window supaya bisa dipanggil dari onclick HTML ---- */
 window.addToCart = addToCart;
 window.applyVoucher = applyVoucher;
@@ -1809,3 +1912,6 @@ window.submitReview = submitReview;
 window.removeFromCart = removeFromCart;
 window.updateQty = updateQty;
 window.placeOrder = placeOrder;
+window.openCategory = openCategory;
+window.closeMenu = closeMenu;
+window.showToast = showToast;
