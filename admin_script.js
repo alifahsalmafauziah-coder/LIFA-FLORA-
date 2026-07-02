@@ -102,9 +102,9 @@ function requireLogin() {
 /* ============================================================
    DASHBOARD
    ============================================================ */
-function initDashboard() {
+async function initDashboard() {
   requireLogin();
-  loadData();
+  await loadData();
 
   const totalProduk   = products.length;
   const totalPesanan  = allOrders.length;
@@ -155,9 +155,9 @@ function initDashboard() {
 /* ============================================================
    PRODUK
    ============================================================ */
-function initProduk() {
+async function initProduk() {
   requireLogin();
-  loadData();
+  await loadData();
   renderProdukTable();
 }
 
@@ -215,23 +215,22 @@ function deleteProduk(id) {
 /* ============================================================
    TAMBAH PRODUK
    ============================================================ */
-function initTambahProduk() {
+async function initTambahProduk() {
   requireLogin();
-  loadData();
+  await loadData();
   const form = document.getElementById("formTambahProduk");
   if (!form) return;
 
-  // Gunakan onclick di button, bukan form submit, agar tidak ada konflik
   const submitBtn = form.querySelector("button[type='submit']");
   if (submitBtn) {
-    submitBtn.type = "button"; // ganti ke button biasa
+    submitBtn.type = "button";
     submitBtn.addEventListener("click", doTambahProduk);
   }
   form.addEventListener("submit", e => { e.preventDefault(); doTambahProduk(); });
 }
 
-function doTambahProduk() {
-  loadData(); // reload dulu agar data sinkron
+async function doTambahProduk() {
+  await loadData();
   const nama     = document.getElementById("tpNama")?.value.trim();
   const hargaRaw = document.getElementById("tpHarga")?.value;
   const stokRaw  = document.getElementById("tpStok")?.value;
@@ -267,9 +266,9 @@ function doTambahProduk() {
 /* ============================================================
    EDIT PRODUK
    ============================================================ */
-function initEditProduk() {
+async function initEditProduk() {
   requireLogin();
-  loadData();
+  await loadData();
   const params = new URLSearchParams(window.location.search);
   const id     = Number(params.get("id"));
   const p      = products.find(x => x.id === id);
@@ -330,9 +329,9 @@ function initEditProduk() {
 /* ============================================================
    PESANAN
    ============================================================ */
-function initPesanan() {
+async function initPesanan() {
   requireLogin();
-  loadData();
+  await loadData();
   renderPesananTable();
 }
 

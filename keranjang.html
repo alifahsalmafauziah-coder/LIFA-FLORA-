@@ -494,10 +494,17 @@
   <div class="toast" id="toast"></div>
 
   <script type="module" src="script.js"></script>
-  <script>
+  <script type="module">
+    import { getProductsFromFirestore } from "./firebase-config.js";
+
     lucide.createIcons();
-    loadState();
-    updateNavAuth();
+
+    async function initKeranjang() {
+      await loadState();
+      updateNavAuth();
+      renderKeranjang();
+      updateCartCount();
+    }
 
     /* ===== RENDER KERANJANG ===== */
     function renderKeranjang() {
@@ -525,7 +532,6 @@
         return;
       }
 
-      // Render item
       listEl.innerHTML = cart.map(item => {
         const subtotal = item.price * item.qty;
         const product  = products.find(p => p.id === item.id);
@@ -548,14 +554,12 @@
           </div>`;
       }).join("");
 
-      // Summary
       const summary = getCartSummary();
       if (subtotalEl)  subtotalEl.textContent  = formatPrice(summary.subtotal);
       if (discountEl)  discountEl.textContent  = "-" + formatPrice(summary.discount);
       if (totalEl)     totalEl.textContent     = formatPrice(summary.total);
       if (checkoutBtn) checkoutBtn.disabled    = false;
 
-      // Badge jumlah
       const totalQty = summary.totalItems;
       if (badgeEl) badgeEl.innerHTML = `<span class="kr-item-count-badge">${totalQty} item</span>`;
     }
@@ -623,14 +627,19 @@
       window.location.href = "checkout.html";
     }
 
-    // Init
-    renderKeranjang();
-    updateCartCount();
+    /* Expose ke window */
+    window.krChangeQty = krChangeQty;
+    window.krRemoveItem = krRemoveItem;
+    window.krClearCart = krClearCart;
+    window.krApplyVoucher = krApplyVoucher;
+    window.krGoCheckout = krGoCheckout;
+    window.renderKeranjang = renderKeranjang;
 
     window.addEventListener('scroll', () => {
       document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
     });
+
+    initKeranjang();
   </script>
-  <script>initCSWidget();</script>
 </body>
 </html>

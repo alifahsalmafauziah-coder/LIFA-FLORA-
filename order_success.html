@@ -429,12 +429,36 @@
   <div class="toast" id="toast"></div>
 
   <script type="module" src="script.js"></script>
-  <script>
+  <script type="module">
     lucide.createIcons();
-    loadState();
-    updateNavAuth();
 
-    /* ===== FUNGSI STRUK ===== */
+    async function initOrderSuccess() {
+      await loadState();
+      updateNavAuth();
+
+      const order = getLastOrder();
+      if (order) {
+        document.getElementById('osOrderNum').textContent = '#' + order.orderNum;
+        document.getElementById('osDate').textContent     = fmtDate(order.createdAt);
+        document.getElementById('osPayment').textContent  = order.payment || '-';
+        document.getElementById('osStatus').textContent   = order.status  || 'Diproses';
+        document.getElementById('osTotal').textContent    = formatPrice(order.total);
+
+        const itemList = document.getElementById('osItemList');
+        itemList.innerHTML = order.items.map(item => `
+          <div class="os-item">
+            <div class="os-item-emoji">${item.emoji || '💐'}</div>
+            <div class="os-item-name">${item.name}</div>
+            <div class="os-item-qty">x${item.qty}</div>
+            <div class="os-item-price">${formatPrice(item.price * item.qty)}</div>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('osItemList').innerHTML =
+          '<p style="color:var(--text-light);font-size:0.88rem;">Data pesanan tidak ditemukan.</p>';
+      }
+    }
+
     function fmtRp(n) { return "Rp " + Number(n).toLocaleString("id-ID"); }
 
     function openStruk() {
@@ -469,74 +493,30 @@
           <div class="struk-tagline">Buket Bunga Cantik & Berkualitas</div>
           <div class="struk-tagline">WA: 0877-1079-3723</div>
         </div>
-
         <hr class="struk-divider bold" />
-
-        <div class="struk-row">
-          <span class="label">No. Pesanan</span>
-          <span class="value">#${order.orderNum}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Tanggal</span>
-          <span class="value">${tgl}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Jam</span>
-          <span class="value">${jam}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Pembeli</span>
-          <span class="value">${order.nama || "-"}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Telepon</span>
-          <span class="value">${order.phone || "-"}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Alamat</span>
-          <span class="value">${order.alamat || "-"}</span>
-        </div>
-
+        <div class="struk-row"><span class="label">No. Pesanan</span><span class="value">#${order.orderNum}</span></div>
+        <div class="struk-row"><span class="label">Tanggal</span><span class="value">${tgl}</span></div>
+        <div class="struk-row"><span class="label">Jam</span><span class="value">${jam}</span></div>
+        <div class="struk-row"><span class="label">Pembeli</span><span class="value">${order.nama || "-"}</span></div>
+        <div class="struk-row"><span class="label">Telepon</span><span class="value">${order.phone || "-"}</span></div>
+        <div class="struk-row"><span class="label">Alamat</span><span class="value">${order.alamat || "-"}</span></div>
         <hr class="struk-divider" />
         <div style="font-size:0.75rem;font-weight:700;margin-bottom:0.35rem;letter-spacing:0.05em;">DETAIL PESANAN</div>
         <div class="struk-items">${itemRows}</div>
-
         <hr class="struk-divider" />
-
-        <div class="struk-row">
-          <span class="label">Subtotal</span>
-          <span class="value">${fmtRp(order.subtotal || order.total)}</span>
-        </div>
+        <div class="struk-row"><span class="label">Subtotal</span><span class="value">${fmtRp(order.subtotal || order.total)}</span></div>
         ${diskon > 0 ? `<div class="struk-row"><span class="label">Diskon</span><span class="value">-${fmtRp(diskon)}</span></div>` : ""}
-        <div class="struk-row">
-          <span class="label">Ongkir</span>
-          <span class="value">${ongkir === 0 ? "GRATIS" : fmtRp(ongkir)}</span>
-        </div>
-
+        <div class="struk-row"><span class="label">Ongkir</span><span class="value">${ongkir === 0 ? "GRATIS" : fmtRp(ongkir)}</span></div>
         <hr class="struk-divider bold" />
-
-        <div class="struk-total-row">
-          <span>TOTAL</span>
-          <span>${fmtRp(order.total)}</span>
-        </div>
-        <div class="struk-row" style="margin-top:0.3rem;">
-          <span class="label">Pembayaran</span>
-          <span class="value">${order.payment || "-"}</span>
-        </div>
-        <div class="struk-row">
-          <span class="label">Status</span>
-          <span class="value">${order.status || "Diproses"}</span>
-        </div>
-
+        <div class="struk-total-row"><span>TOTAL</span><span>${fmtRp(order.total)}</span></div>
+        <div class="struk-row" style="margin-top:0.3rem;"><span class="label">Pembayaran</span><span class="value">${order.payment || "-"}</span></div>
+        <div class="struk-row"><span class="label">Status</span><span class="value">${order.status || "Diproses"}</span></div>
         <hr class="struk-divider" />
-
         <div class="struk-footer">
           <p class="big">🌷 Terima Kasih! 🌷</p>
           <p>Pesanan sudah diterima & sedang diproses.</p>
           <p>Simpan struk ini sebagai bukti pembayaran.</p>
-          <p style="margin-top:0.5rem;font-size:0.68rem;color:#aaa;">
-            Dicetak: ${new Date().toLocaleString("id-ID")}
-          </p>
+          <p style="margin-top:0.5rem;font-size:0.68rem;color:#aaa;">Dicetak: ${new Date().toLocaleString("id-ID")}</p>
         </div>
       `;
 
@@ -553,39 +533,23 @@
       if (e.target.id === "strukOverlay") closeStruk();
     }
 
-    function printStruk() {
-      window.print();
-    }
+    function printStruk() { window.print(); }
 
-    // Tampilkan data pesanan terakhir
-    const order = getLastOrder();
-
-    if (order) {
-      document.getElementById('osOrderNum').textContent = '#' + order.orderNum;
-      document.getElementById('osDate').textContent     = fmtDate(order.createdAt);
-      document.getElementById('osPayment').textContent  = order.payment || '-';
-      document.getElementById('osStatus').textContent   = order.status  || 'Diproses';
-      document.getElementById('osTotal').textContent    = formatPrice(order.total);
-
-      const itemList = document.getElementById('osItemList');
-      itemList.innerHTML = order.items.map(item => `
-        <div class="os-item">
-          <div class="os-item-emoji">${item.emoji || '💐'}</div>
-          <div class="os-item-name">${item.name}</div>
-          <div class="os-item-qty">x${item.qty}</div>
-          <div class="os-item-price">${formatPrice(item.price * item.qty)}</div>
-        </div>
-      `).join('');
-    } else {
-      // Tidak ada data pesanan
-      document.getElementById('osItemList').innerHTML =
-        '<p style="color:var(--text-light);font-size:0.88rem;">Data pesanan tidak ditemukan.</p>';
-    }
+    /* Expose ke window */
+    window.openStruk = openStruk;
+    window.closeStruk = closeStruk;
+    window.closeStrukOutside = closeStrukOutside;
+    window.printStruk = printStruk;
 
     window.addEventListener('scroll', () => {
       document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
     });
+
+    initOrderSuccess();
   </script>
-  <script>initCSWidget();</script>
+  <!-- Tombol CS WhatsApp Floating -->
+  <a href="https://api.whatsapp.com/send?phone=6287710793723&text=Halo%20Lifa%20Flora%2C%20saya%20ingin%20bertanya%20tentang%20produk" target="_blank" class="cs-float-btn" title="Chat CS via WhatsApp">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.554 4.127 1.526 5.87L0 24l6.293-1.497A11.96 11.96 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.891 0-3.667-.502-5.2-1.378l-.374-.217-3.736.889.924-3.638-.243-.389A9.955 9.955 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z"/></svg>
+  </a>
 </body>
 </html>

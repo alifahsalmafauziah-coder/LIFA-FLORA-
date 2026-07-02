@@ -1129,8 +1129,8 @@ function goToCheckout() {
   window.location.href = "checkout.html";
 }
 
-function initApp() {
-  loadState();
+async function initApp() {
+  await loadState();
   renderProducts("semua");
   initInfoAccordion();
   initRevealOnScroll();
@@ -1236,8 +1236,8 @@ function initProfilePage() {
 /* ============================================================
    CHECKOUT PAGE
    ============================================================ */
-function initCheckoutPage() {
-  loadState();
+async function initCheckoutPage() {
+  await loadState();
   const session = getSession();
   const cartItemsEl = document.getElementById("coCartItems");
   const subtotalEl = document.getElementById("coSubtotal");
