@@ -1782,3 +1782,30 @@ function submitReview() {
     openReviewModal(_reviewProductId);
   }, 300);
 }
+/* ---- Expose fungsi ke window supaya bisa dipanggil dari onclick HTML ---- */
+window.addToCart = addToCart;
+window.applyVoucher = applyVoucher;
+window.backToProducts = backToProducts;
+window.clearCart = clearCart;
+window.copyPaymentNumber = copyPaymentNumber;
+window.copySelNum = copySelNum;
+window.copyVoucherCode = copyVoucherCode;
+window.filterProducts = filterProducts;
+window.goToCheckout = goToCheckout;
+window.logoutUser = logoutUser;
+window.navigateTo = navigateTo;
+window.resetPayCategory = resetPayCategory;
+window.selectBank = selectBank;
+window.selectPayCategory = selectPayCategory;
+window.submitContact = submitContact;
+window.submitProductSearch = submitProductSearch;
+window.toggleCart = toggleCart;
+window.toggleMenu = toggleMenu;
+window.showProductDetail = showProductDetail;
+window.openReviewModal = openReviewModal;
+window.closeReviewModal = closeReviewModal;
+window.selectStar = selectStar;
+window.submitReview = submitReview;
+window.removeFromCart = removeFromCart;
+window.updateQty = updateQty;
+window.placeOrder = placeOrder;

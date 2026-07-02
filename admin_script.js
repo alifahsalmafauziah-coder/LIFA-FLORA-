@@ -423,3 +423,13 @@ function getFotoBase64(inputId, callback) {
   reader.onload = e => callback(e.target.result);
   reader.readAsDataURL(input.files[0]);
 }
+
+/* ---- Expose fungsi ke window supaya bisa dipanggil dari onclick HTML ---- */
+window.doLogin = doLogin;
+window.doLogout = doLogout;
+window.doTambahProduk = doTambahProduk;
+window.deleteProduk = deleteProduk;
+window.filterPesanan = filterPesanan;
+window.updateOrderStatus = updateOrderStatus;
+window.removeFoto = removeFoto;
+window.getFotoBase64 = getFotoBase64;
