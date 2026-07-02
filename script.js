@@ -1,7 +1,9 @@
 /* ============================================================
    script.js — Lifa Flora E-Commerce (FIXED VERSION)
-   Developed by Annisa Nur Afinni
    ============================================================ */
+
+/* ---- Import Firebase ---- */
+import { getProductsFromFirestore, saveProductsToFirestore, listenProducts } from "./firebase-config.js";
 
 const STORAGE_PRODUCTS_KEY = "lifaFloraProducts";
 const STORAGE_ORDERS_KEY = "lifaFloraOrders";
@@ -61,7 +63,7 @@ function fmtDate(iso) {
 
 const defaultProducts = [
   { id:1, name:"Rose Elegance", price:185000, emoji:"🌹", image:"images/rose.jpg", desc:"Buket mawar merah premium, cocok untuk anniversary atau ungkapan cinta.", category:"anniversary", hot:true, stock: 8, sold: 1200 },
-  { id:2, name:"Cherry Blossom Dream", price:165000, emoji:"🌸", image:"images/chery blosoom.jpeg", desc:"Buket bunga sakura pastel lembut, tampilan aesthetic dan romantis.", category:"ulang tahun", hot:false, stock: 10, sold: 1000 },
+  { id:2, name:"Cherry Blossom Dream", price:165000, emoji:"🌸", image:"images/chery blosoom.jpeg", desc:"Buket bunga sakura pastel lembut, tampilan aesthetic dan romantis.", category:"ulang tahun", hot:false, stock: 10, sold: 856 },
   { id:3, name:"Sunflower Glow", price:145000, emoji:"🌻", image:"images/sunflower glow.jpeg", desc:"Buket bunga matahari ceria, cocok untuk teman wisuda atau hadiah.", category:"wisuda", hot:true, stock: 12, sold: 2100 },
   { id:4, name:"Pastel Tulip", price:175000, emoji:"🌷", image:"images/pastel tulip.jpeg", desc:"Buket tulip warna pastel campuran, elegan dan modern.", category:"anniversary", hot:false, stock: 9, sold: 634 },
   { id:5, name:"Mix Garden", price:210000, emoji:"💐", image:"images/mix garden.jpeg", desc:"Buket campur berbagai bunga segar pilihan, tampil mewah dan penuh warna.", category:"ulang tahun", hot:true, stock: 6, sold: 1500 },
@@ -218,16 +220,39 @@ function saveState() {
   localStorage.setItem(STORAGE_CART_PERSIST_KEY, JSON.stringify(cart));
 }
 
-function loadState() {
-  const storedProducts = localStorage.getItem(STORAGE_PRODUCTS_KEY);
-  const storedOrders   = localStorage.getItem(STORAGE_ORDERS_KEY);
-  const storedCart     = localStorage.getItem(STORAGE_CART_PERSIST_KEY);
-  products = storedProducts ? JSON.parse(storedProducts) : [...defaultProducts];
-  orders   = storedOrders   ? JSON.parse(storedOrders)   : [];
-  cart     = storedCart     ? JSON.parse(storedCart)     : [];
+async function loadState() {
+  const storedOrders = localStorage.getItem(STORAGE_ORDERS_KEY);
+  const storedCart   = localStorage.getItem(STORAGE_CART_PERSIST_KEY);
+  orders = storedOrders ? JSON.parse(storedOrders) : [];
+  cart   = storedCart   ? JSON.parse(storedCart)   : [];
+  if (!Array.isArray(orders)) orders = [];
+  if (!Array.isArray(cart))   cart   = [];
+
+  /* Coba ambil produk dari Firestore */
+  try {
+    const firestoreProducts = await getProductsFromFirestore();
+    if (firestoreProducts && firestoreProducts.length > 0) {
+      products = firestoreProducts;
+      /* Kalau Firestore masih kosong (pertama kali), upload defaultProducts */
+    } else {
+      products = [...defaultProducts];
+      await saveProductsToFirestore(defaultProducts);
+    }
+  } catch (e) {
+    /* Fallback ke localStorage kalau Firestore error */
+    const storedProducts = localStorage.getItem(STORAGE_PRODUCTS_KEY);
+    products = storedProducts ? JSON.parse(storedProducts) : [...defaultProducts];
+  }
   if (!Array.isArray(products)) products = [...defaultProducts];
-  if (!Array.isArray(orders))   orders   = [];
-  if (!Array.isArray(cart))     cart     = [];
+
+  /* Listen perubahan produk realtime dari Firestore */
+  listenProducts((updatedProducts) => {
+    if (updatedProducts && updatedProducts.length > 0) {
+      products = updatedProducts;
+      renderProducts(currentFilter);
+      injectRatingToCards();
+    }
+  });
 }
 
 const vouchers = {

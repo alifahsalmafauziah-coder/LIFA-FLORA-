@@ -200,31 +200,6 @@
       min-height: 80px;
     }
 
-    .co-voucher-row {
-      display: flex;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    .co-voucher-row input {
-      flex: 1;
-    }
-
-    .co-voucher-btn {
-      border: none;
-      background: var(--pink-deep);
-      color: white;
-      padding: 0.7rem 0.95rem;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      cursor: pointer;
-      transition: var(--transition);
-    }
-
-    .co-voucher-btn:hover {
-      background: #c84b6c;
-    }
-
     /* Ringkasan item */
     .co-item {
       display: flex;
@@ -778,14 +753,6 @@
                 </div>
               </div>
 
-              <div class="co-field" style="margin-top:0.75rem;">
-                <label for="coVoucher">Masukkan kode voucher</label>
-                <div class="co-voucher-row">
-                  <input type="text" id="coVoucher" placeholder="Contoh: LIFA10" />
-                  <button type="button" class="co-voucher-btn">Terapkan</button>
-                </div>
-              </div>
-
               <!-- Hidden input untuk menyimpan nilai pembayaran -->
               <input type="hidden" id="coPayment" value="" />
 
@@ -935,7 +902,7 @@
   <!-- Toast -->
   <div class="toast" id="toast"></div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
   <script>
     /* ===== PAYMENT CATEGORY SYSTEM ===== */
     let _selectedPayValue = "";

@@ -61,7 +61,6 @@
         Setiap buket Lifa Flora dibuat dengan tangan dan penuh kasih sayang,
         cocok untuk ulang tahun, wisuda, anniversary, maupun hadiah spesial.
       </p>
-
       <div class="hero-actions">
         <a href="#products" class="btn btn-primary">Lihat Koleksi</a>
         <a href="#contact" class="btn btn-outline">Hubungi Kami</a>
@@ -194,14 +193,12 @@
     </div>
 
     <!-- Filter kategori -->
-    <div class="filter-wrapper">
-      <div class="filter-bar">
-        <button class="filter-btn active" data-category="semua" onclick="filterProducts('semua', this)">Semua</button>
-        <button class="filter-btn" data-category="wisuda" onclick="filterProducts('wisuda', this)">Wisuda</button>
-        <button class="filter-btn" data-category="anniversary" onclick="filterProducts('anniversary', this)">Anniversary</button>
-        <button class="filter-btn" data-category="ulang tahun" onclick="filterProducts('ulang tahun', this)">Ulang Tahun</button>
-        <button class="filter-btn" data-category="custom" onclick="filterProducts('custom', this)">Custom</button>
-      </div>
+    <div class="filter-bar">
+      <button class="filter-btn active" data-category="semua" onclick="filterProducts('semua', this)">Semua</button>
+      <button class="filter-btn" data-category="wisuda" onclick="filterProducts('wisuda', this)">Wisuda</button>
+      <button class="filter-btn" data-category="anniversary" onclick="filterProducts('anniversary', this)">Anniversary</button>
+      <button class="filter-btn" data-category="ulang tahun" onclick="filterProducts('ulang tahun', this)">Ulang Tahun</button>
+      <button class="filter-btn" data-category="custom" onclick="filterProducts('custom', this)">Custom</button>
     </div>
 
     <!-- Grid produk — diisi oleh JavaScript -->
@@ -448,7 +445,7 @@
   <!-- Toast notifikasi -->
   <div class="toast" id="toast"></div>
 
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
   <script>initCSWidget();</script>
 </script>
 </body>

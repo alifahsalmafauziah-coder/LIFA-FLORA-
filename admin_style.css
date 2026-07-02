@@ -247,17 +247,6 @@ a { color: inherit; text-decoration: none; }
   font-size: 0.75rem;
   font-weight: 600;
 }
-    letter-spacing: 1px;
-
-    color: #ff69b4;
-    opacity: .2;
-
-    z-index: 99999;
-    pointer-events: none;
-    user-select: none;
-
-    animation: pulse 3s infinite;
-}
 
 .ad-badge.hot    { background: #FEF3C7; color: #D97706; }
 .ad-badge.normal { background: var(--ad-green-lt); color: var(--ad-green); }

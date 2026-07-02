@@ -1,7 +1,9 @@
 /* ============================================================
    admin_script.js — Lifa Flora Admin (versi lengkap)
-   Developed by Alifah Salma Fauziah
    ============================================================ */
+
+/* ---- Import Firebase ---- */
+import { getProductsFromFirestore, saveProductsToFirestore, saveOneProductToFirestore } from "./firebase-config.js";
 
 const STORAGE_PRODUCTS_KEY  = "lifaFloraProducts";
 const STORAGE_ORDERS_KEY    = "lifaFloraOrders";
@@ -36,17 +38,28 @@ let allOrders = [];
 /* ---------- helpers ---------- */
 function formatPrice(n) { return "Rp " + Number(n).toLocaleString("id-ID"); }
 
-function loadData() {
-  const p = localStorage.getItem(STORAGE_PRODUCTS_KEY);
+async function loadData() {
+  try {
+    const firestoreProducts = await getProductsFromFirestore();
+    if (firestoreProducts && firestoreProducts.length > 0) {
+      products = firestoreProducts;
+    } else {
+      products = [...defaultProducts];
+      await saveProductsToFirestore(defaultProducts);
+    }
+  } catch (e) {
+    const p = localStorage.getItem(STORAGE_PRODUCTS_KEY);
+    products = p ? JSON.parse(p) : [...defaultProducts];
+  }
   const o = localStorage.getItem(STORAGE_ALL_ORDERS);
-  products  = p ? JSON.parse(p) : [...defaultProducts];
   allOrders = o ? JSON.parse(o) : [];
   if (!Array.isArray(products))  products  = [...defaultProducts];
   if (!Array.isArray(allOrders)) allOrders = [];
 }
 
-function saveProducts() {
+async function saveProducts() {
   localStorage.setItem(STORAGE_PRODUCTS_KEY, JSON.stringify(products));
+  await saveProductsToFirestore(products);
 }
 
 function saveAllOrders() {
